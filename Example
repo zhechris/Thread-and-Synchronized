@@ -1,0 +1,414 @@
+package com.company;
+
+class myThread extends Thread{
+
+    private int ticketsCount = 5;//一种有5张票
+    private String name;//窗口，也即是线程的名字
+
+    public myThread(String name){
+        this.name = name;
+    }
+
+    @Override
+    public void run() {
+        while (ticketsCount > 0) {
+            ticketsCount--;//如果还有票，就卖掉一张
+            System.out.println(name + "卖了1一张票，剩余票数为：" + ticketsCount);
+        }
+    }
+}
+public class Main {
+
+    public static void main(String args[]) {
+        //创建三个线程，模拟三个窗口卖票
+        myThread t1 = new myThread("窗口1");
+        myThread t2 = new myThread("窗口2");
+        myThread t3 = new myThread("窗口3");
+
+        //启动这三个线程，也即是窗口开始卖票
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+
+
+package com.company;
+
+class myThread_Runnable implements Runnable{
+    private int ticketsCount = 5;//一种有5张票
+
+    public void run() {//如果给run方法加锁，那么会出现一个窗口会卖光所有票的现象
+        while (ticketsCount > 0) {
+            ticketsCount--;//如果还有票，就卖掉一张
+            System.out.println(Thread.currentThread().getName() + "卖了1一张票，剩余票数为：" + ticketsCount);
+        }
+    }
+
+}
+
+public class Main {
+
+    public static void main(String args[]){
+        myThread_Runnable mt = new myThread_Runnable();
+        //创建三个线程，来模拟三个售票窗口
+        Thread t1 = new Thread(mt,"窗口1");
+        Thread t2 = new Thread(mt,"窗口2");
+        Thread t3 = new Thread(mt,"窗口3");
+
+        //启动这三个线程，也即是三个窗口，开始卖票
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+
+package com.company;
+
+class num {
+    static int ticketsCount = 5;//一种有5张票
+}
+class myThread_Runnable implements Runnable{
+    num num = new num();
+
+    public void run() {//如果给run方法加锁，那么会出现一个窗口会卖光所有票的现象
+        synchronized (num) {
+            while (num.ticketsCount > 0) {
+                num.ticketsCount--;//如果还有票，就卖掉一张
+                System.out.println(Thread.currentThread().getName() + "卖了1一张票，剩余票数为：" + num.ticketsCount);
+            }
+        }
+    }
+
+}
+
+public class Main {
+
+    public static void main(String args[]){
+        myThread_Runnable mt = new myThread_Runnable();
+        //创建三个线程，来模拟三个售票窗口
+        Thread t1 = new Thread(mt,"窗口1");
+        Thread t2 = new Thread(mt,"窗口2");
+        Thread t3 = new Thread(mt,"窗口3");
+
+        //启动这三个线程，也即是三个窗口，开始卖票
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+
+package com.company;
+//要打印的资源
+class Num {
+    int i = 1;
+    boolean flag = false; //两个线程，交替执行的一个标志
+}
+
+//打印奇数的线程
+class PrintQi implements Runnable{
+    Num num ;
+    public PrintQi(Num num)
+    {
+        this.num = num;
+    }
+    public void run()
+    {
+        while(num.i <= 100)
+        {
+            synchronized (num) {
+                if(num.flag)
+                {
+                    try {
+                        num.wait();
+                    } catch (Exception e) {
+
+                    }
+                }
+                else {
+                    System.out.println("奇数" + num.i);
+                    num.i++;
+                    num.flag = true;
+                    num.notify();
+                }
+            }
+        }
+    }
+}
+
+//打印偶数的线程
+class PrintOu implements Runnable{
+    Num num;
+    public PrintOu(Num num) {
+        this.num = num;
+    }
+    public void run()
+    {
+        while(num.i <= 100)
+        {
+            synchronized (num)/* 必须要用一把锁对象，这个对象是num*/ {
+                if(!num.flag)
+                {
+                    try
+                    {
+                        num.wait();  //操作wait()函数的必须和锁是同一个
+                    } catch (Exception e) {
+
+                    }
+                }
+                else {
+                    System.out.println("偶数" + num.i);
+                    num.i++;
+                    num.flag = false;
+                    num.notify();
+                }
+            }
+        }
+    }
+}
+
+
+//主函数
+public class Main {
+    public static void main(String[] args) {
+        Num num = new Num(); //声明一个资源
+
+        PrintQi pQi = new PrintQi(num);
+        PrintOu pOu = new PrintOu(num);
+
+        Thread aThread = new Thread(pQi);
+        Thread bThread = new Thread(pOu);
+
+        aThread.start();
+        bThread.start();
+    }
+}
+
+package com.company;
+
+class num {
+    int i = 1;
+    boolean flag = false;
+}
+
+class thread1 extends Thread {
+    num num;
+    thread1(num num) {
+        this.num = num;
+    }
+
+    public void run() {
+        while (num.i < 6) {
+            synchronized(num) {
+                if (num.flag) {
+                    try {
+                        num.wait();
+                    } catch (Exception e) {
+
+                    }
+                } else {
+                    System.out.println("奇数" + num.i);
+                    num.i++;
+                    num.flag = !num.flag;
+                    num.notify();
+                }
+            }
+        }
+    }
+}
+
+class thread2 extends Thread {
+    num num;
+    thread2(num num) {
+        this.num = num;
+    }
+    public void run() {
+        while (num.i < 6) {
+            synchronized(num) {
+                if (!num.flag) {
+                    try {
+                        num.wait();
+                    } catch (Exception e) {
+
+                    }
+                } else {
+                    System.out.println("偶数" + num.i);
+                    num.i++;
+                    num.flag = !num.flag;
+                    num.notify();
+                }
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main (String[] args) {
+        num num = new num();
+        thread1 t1 = new thread1(num);
+        thread2 t2 = new thread2(num);
+
+        t1.start();
+        t2.start();
+    }
+}
+
+package com.company;
+
+import java.util.Scanner;
+
+public class Main
+{
+    public static void main(String[] args)
+    {
+        Bank bank=new Bank();
+        Thread lingming=new Thread(bank,"李明");
+        Thread wangtao=new Thread(bank,"王涛");
+
+        lingming.start();
+        try
+        {
+            Thread.sleep(4000);
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        wangtao.start();
+    }
+}
+
+class Bank implements Runnable
+{
+    public static int money=1000;
+
+    @Override
+    public synchronized void run()
+    {
+        System.out.println(Thread.currentThread().getName()+" 登陆 您银行的存款为:"+money);
+
+        Scanner in=new Scanner(System.in);
+        System.out.println("请输入您要取款金额:");
+        int num=in.nextInt();
+        if(money<num)
+        {
+            System.out.println(Thread.currentThread().getName()+"您的余额:"+money+" 不足 "+num);
+        }
+        else
+        {
+            money=money-num;
+            System.out.println(Thread.currentThread().getName()+" 取了 "+num+"  您当前余额为:"+money);
+        }
+    }
+}
+
+package com.company;
+
+class Resource{  //生产者和消费者都要操作的资源
+    private String name;
+    private int count=1;
+    private boolean flag=false;
+    public synchronized void set(String name){
+        if(flag)
+            try {
+                wait();
+            } catch (Exception e) {
+
+            }
+        this.name=name+"---"+count++;
+        System.out.println(Thread.currentThread().getName()+"...生产者..."+this.name);
+        flag=true;
+        this.notify();
+    }
+    public synchronized void out(){
+        if(!flag)
+            try {
+                wait();
+            } catch (Exception e) {
+
+            }
+        System.out.println(Thread.currentThread().getName()+"...消费者..."+this.name);
+        flag=false;
+        this.notify();
+    }
+}
+class Producer implements Runnable{
+    private Resource res;
+    Producer(Resource res){
+        this.res=res;
+    }
+    public void run(){
+        int count = 6;
+        while(count > 0){
+            res.set("商品");
+            count--;
+        }
+    }
+}
+class Consumer implements Runnable{
+    private Resource res;
+    Consumer(Resource res){
+        this.res=res;
+    }
+    public void run(){
+        int count = 6;
+        while(count > 0){
+            res.out();
+            count--;
+        }
+    }
+}
+public class Main{
+    public static void main(String[] args){
+        Resource r=new Resource();
+        Producer pro=new Producer(r);
+        Consumer con=new Consumer(r);
+        Thread t1=new Thread(pro);
+        Thread t2=new Thread(con);
+        t1.start();
+        t2.start();
+    }
+}//运行结果正常，生产者生产一个商品，紧接着消费者消费一个商品。
+
+package com.company;
+
+public class Main implements Runnable {
+    private String name;
+    private Object prev;
+    private Object self;
+    private Main(String name, Object prev, Object self) {
+        this.name = name;
+        this.prev = prev;
+        this.self = self;
+    }
+    public void run() {
+        int count = 10;
+        while (count > 0) {
+            synchronized (prev) {
+                synchronized (self) {
+                    System.out.println(name);
+                    count--;
+                    self.notify();
+                }
+                try {
+                    prev.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Object a = new Object();
+        Object b = new Object();
+        Object c = new Object();
+        Main pa = new Main("A", c, a);
+        Main pb = new Main("B", a, b);
+        Main pc = new Main("C", b, c);
+        new Thread(pa).start();
+        Thread.sleep(100);  //确保按顺序A、B、C执行
+        new Thread(pb).start();
+        Thread.sleep(100);
+        new Thread(pc).start();
+        Thread.sleep(100);
+    }
+}
